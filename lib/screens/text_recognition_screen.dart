@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For Clipboard functionality
 import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'pdf_export_screen.dart';
 
 class TextRecognitionScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class _TextRecognitionScreenState extends State<TextRecognitionScreen> {
   bool _isProcessing = true;
   bool _isImageVisible = false; // Flag to control image visibility
   bool _isCopied = false; // Flag to manage copied state
-  Color _buttonColor = Colors.blueAccent; // Default button color
+  Color? _buttonColor; // Default button color (null means use theme)
   String _buttonText = "Copy Text"; // Default button text
 
   @override
@@ -64,11 +65,13 @@ class _TextRecognitionScreenState extends State<TextRecognitionScreen> {
     // Reset the text and button color after 3 seconds
     await Future.delayed(const Duration(seconds: 1));
 
-    setState(() {
-      _isCopied = false;
-      _buttonText = "Copy Text"; // Reset button text to original
-      _buttonColor = Colors.blueAccent; // Reset button color
-    });
+    if (mounted) {
+      setState(() {
+        _isCopied = false;
+        _buttonText = "Copy Text"; // Reset button text to original
+        _buttonColor = null; // Reset button color to theme default
+      });
+    }
   }
 
   @override
@@ -76,60 +79,78 @@ class _TextRecognitionScreenState extends State<TextRecognitionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Extracted Text"),
-        backgroundColor: Colors.blueAccent,
+        centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: _isProcessing
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(
+                child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ))
             : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Show Image Button
+                  // Show/Delete Image Button
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.image),
-                    label: const Text("Show Image"),
+                    icon: Icon(_isImageVisible ? Icons.delete : Icons.image),
+                    label: Text(_isImageVisible ? "Hide Image" : "Show Image"),
                     onPressed: () {
                       setState(() {
                         _isImageVisible = !_isImageVisible; // Toggle visibility
                       });
                     },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50),
-                      backgroundColor: Colors.blueAccent,
-                      textStyle: const TextStyle(fontSize: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
+                    style: _isImageVisible
+                        ? ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white,
+                          )
+                        : null,
+                  ).animate().fadeIn(duration: 400.ms),
                   const SizedBox(height: 20),
 
                   // Conditionally show the image if button is pressed
-                  _isImageVisible
-                      ? Center(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              widget.imageFile,
-                              fit: BoxFit.contain,
-                              height: 300,
-                              width: double.infinity,
-                            ),
-                          ),
-                        )
-                      : Container(), // Empty container when image is hidden
-
-                  const SizedBox(height: 20),
+                  if (_isImageVisible)
+                    Container(
+                      height: 300,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.file(
+                          widget.imageFile,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    )
+                        .animate()
+                        .scale(duration: 400.ms, curve: Curves.easeOutBack),
 
                   // Display extracted text
                   Expanded(
-                    child: SingleChildScrollView(
-                      child: Text(
-                        _extractedText,
-                        style: const TextStyle(fontSize: 16),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardTheme.color,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color:
+                              Theme.of(context).dividerColor.withOpacity(0.1),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ),
+                      child: SingleChildScrollView(
+                        child: Text(
+                          _extractedText,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    ).animate().fadeIn(delay: 200.ms, duration: 600.ms),
                   ),
                   const SizedBox(height: 20),
 
@@ -138,15 +159,11 @@ class _TextRecognitionScreenState extends State<TextRecognitionScreen> {
                     icon: const Icon(Icons.copy),
                     label: Text(_buttonText), // Dynamically change button text
                     onPressed: _copyToClipboard,
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50),
-                      backgroundColor: _buttonColor, // Change color dynamically
-                      textStyle: const TextStyle(fontSize: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
+                    style: _buttonColor != null
+                        ? ElevatedButton.styleFrom(
+                            backgroundColor: _buttonColor)
+                        : null,
+                  ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
 
                   const SizedBox(height: 20),
 
@@ -158,20 +175,13 @@ class _TextRecognitionScreenState extends State<TextRecognitionScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              PdfExportScreen(text: _extractedText),
+                          builder: (context) => PdfExportScreen(
+                            text: _extractedText,
+                          ),
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50),
-                      backgroundColor: Colors.blueAccent,
-                      textStyle: const TextStyle(fontSize: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
+                  ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
                 ],
               ),
       ),

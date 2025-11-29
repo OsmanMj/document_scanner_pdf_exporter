@@ -33,8 +33,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Document Scanner',
-          theme:
-              themeProvider.isDarkTheme ? ThemeData.dark() : ThemeData.light(),
+          theme: themeProvider.currentTheme,
           home: const SplashScreen(),
         );
       },

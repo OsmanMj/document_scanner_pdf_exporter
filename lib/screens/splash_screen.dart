@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -24,44 +25,32 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo with fade-in animation
-            AnimatedOpacity(
-              opacity: 1.0,
-              duration: const Duration(seconds: 2),
-              child: Image.asset(
-                'assets/logo.png', // Ensure the logo image is in assets
-                height: 120,
-              ),
-            ),
-            const SizedBox(height: 20),
+            // Logo with animation
+            Image.asset(
+              'assets/logo.png',
+              height: 150,
+            ).animate().fade(duration: 800.ms).scale(
+                delay: 200.ms, duration: 600.ms, curve: Curves.easeOutBack),
+            const SizedBox(height: 30),
             // App name with animation
-            AnimatedOpacity(
-              opacity: 1.0,
-              duration: const Duration(seconds: 2),
-              child: const Text(
-                'Document Scanner',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+            Text(
+              'Document Scanner',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ).animate().fadeIn(delay: 400.ms, duration: 600.ms).slideY(
+                begin: 0.3, end: 0, duration: 600.ms, curve: Curves.easeOut),
+            const SizedBox(height: 40),
             // Circular progress indicator with animation
-            AnimatedOpacity(
-              opacity: 1.0,
-              duration: const Duration(seconds: 2),
-              child: const CircularProgressIndicator(
-                color:
-                    Colors.blue, // You can change the color of the progress bar
-              ),
-            ),
+            CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.secondary,
+            ).animate().fadeIn(delay: 800.ms),
           ],
         ),
       ),

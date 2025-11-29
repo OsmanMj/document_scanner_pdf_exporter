@@ -17,6 +17,4 @@ class DocumentProvider with ChangeNotifier {
     _documents.remove(document);
     notifyListeners();
   }
-
-  // Optionally, you can add a function to retrieve documents from storage or network
 }
